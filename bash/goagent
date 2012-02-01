@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+# Run "gnome-session-properties".
+# Add this script to autorun list.
+#
+
+python ~/src/goagent/local/proxy.py
