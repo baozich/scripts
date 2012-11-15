@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Add the following lines to crontab:
+# Add the following lines to crontab (/var/spool/cron/[usrname]):
 # */3 * * * * /home/cbz/bin/mailrun.sh
 #
 
