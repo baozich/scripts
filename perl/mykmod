@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+
+use strict;
+use File::Finder;
+use Getopt::Std;
+use vars qw/$opt_v/;
+
+my @fields;
+my ($pattern, $count);
+
+getopts('v');
+
+if ( ! open KMOD, "/proc/modules" ) {
+    die 'oops, cannot open /proc/modules :(';
+}
+
+$count = 0;
+
+while (<KMOD>) {
+    chomp;
+    @fields = split;
+    $pattern = "$fields[0]".".ko";
+
+    $pattern =~ s/_/\[-_\]/g;
+    my @result = File::Finder->type('f')->name($pattern)->in('.');
+    if (!@result) {
+	print "Oops, cannot find module \"$fields[0]\"\n";
+	$count += 1;
+    } elsif (!!$opt_v) {
+	print "Module found: @result\n";
+    }
+}
+
+if ($count == 0) {
+    print "+---------------------------------------+\n";
+    print "| Hooray, all modules needed are found! |\n";
+    print "+---------------------------------------+\n";
+}
+
+exit $count;
