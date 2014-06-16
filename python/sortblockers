@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 
+__copyright__ = """
+Copyright (C) 2014, Chen Baozi <baozich@gmail.com>
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+"""
+
 import sys
 import getopt
 import re
@@ -14,6 +31,7 @@ def usage():
 	print '                      blocked source packages'
 	print '       -r, --reverse, reverse the result of comparisons'
 	print '       -h, --help,    show this message'
+	sys.exit(1)
 
 candidates = set()
 priorities = list()
@@ -22,12 +40,13 @@ opt = 'min'
 pattern = re.compile('^Total')
 vols = { 'min':1, 'max':2, 'min-popcon':3, 'max-popcon':4 }
 
-if len(sys.argv) == 1:
+try:
+	opts, args = getopt.getopt(sys.argv[1:], 'mMrh',
+			['min', 'max', 'min-popcon', 'max-popcon', 'help', 'reverse'])
+except getopt.GetoptError as err:
+	print "ERROR:", err
 	usage()
-	exit(0)
 
-opts, args = getopt.getopt(sys.argv[1:], 'mMrh',
-		['min', 'max', 'min-popcon', 'max-popcon', 'help', 'reverse'])
 for o, a in opts:
 	if o in ('-r', 'reverse'):
 		order = False
@@ -39,15 +58,16 @@ for o, a in opts:
 		opt = 'min-popcon'
 	elif o == '--max-popcon':
 		opt = 'max-popcon'
-	elif o in ('-h', '--help'):
-		usage()
-		exit(0)
 	else:
-	 	usage()
-	 	assert False, 'unhandled option'
+		usage()
 
 # Pick the package names out from wanna-build build-attempted list.
-items = open(args[0], 'r')
+try:
+	items = open(args[0], 'r')
+except IOError as err:
+	print err
+	usage()
+
 for line in items:
 	if pattern.match(line):
 		continue
@@ -55,7 +75,13 @@ for line in items:
 items.close()
 
 # Parse the importance file.
-metrics = open(args[1], 'r')
+try:
+	metrics = open(args[1], 'r')
+except IOError as err:
+	print err
+	items.close()
+	usage()
+
 for line in metrics:
 	priorities.append(line.split())
 metrics.close()
