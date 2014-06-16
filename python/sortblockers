@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+
+import sys
+import getopt
+import re
+
+def usage():
+	print 'usage: ./sort.py [-mMrh] <build-attempt-list> <importance-metric>'
+	print '       -m, --min,     sort by minimum number of blocked source packages (default)'
+	print '       -M, --max,     sort by maximum number of blocked source packages'
+	print '       --min-popcon   sort by minimum number of popcon values of the'
+	print '                      blocked source packages'
+	print '       --max-popcon   sort by maximum number of popcon values of the'
+	print '                      blocked source packages'
+	print '       -r, --reverse, reverse the result of comparisons'
+	print '       -h, --help,    show this message'
+
+candidates = set()
+priorities = list()
+order = True
+opt = 'min'
+pattern = re.compile('^Total')
+vols = { 'min':1, 'max':2, 'min-popcon':3, 'max-popcon':4 }
+
+if len(sys.argv) == 1:
+	usage()
+	exit(0)
+
+opts, args = getopt.getopt(sys.argv[1:], 'mMrh',
+		['min', 'max', 'min-popcon', 'max-popcon', 'help', 'reverse'])
+for o, a in opts:
+	if o in ('-r', 'reverse'):
+		order = False
+	elif o in ('-M', '--max'):
+		opt = 'max'
+	elif o in ('-m', '--min'):
+		opt = 'min'
+	elif o == '--min-popcon':
+		opt = 'min-popcon'
+	elif o == '--max-popcon':
+		opt = 'max-popcon'
+	elif o in ('-h', '--help'):
+		usage()
+		exit(0)
+	else:
+	 	usage()
+	 	assert False, 'unhandled option'
+
+# Pick the package names out from wanna-build build-attempted list.
+items = open(args[0], 'r')
+for line in items:
+	if pattern.match(line):
+		continue
+	candidates.add(line.split()[0].split('/')[1].split('_')[0])
+items.close()
+
+# Parse the importance file.
+metrics = open(args[1], 'r')
+for line in metrics:
+	priorities.append(line.split())
+metrics.close()
+
+# Sort by importance.
+if opt == 'max':
+	priorities.sort(key = lambda x: int(x[vols[opt]]), reverse=order)
+elif opt == 'min-popcon':
+	priorities.sort(key = lambda x: int(x[vols[opt]]), reverse=order)
+elif opt == 'max-popcon':
+	priorities.sort(key = lambda x: int(x[vols[opt]]), reverse=order)
+else:
+	priorities.sort(key = lambda x: int(x[vols[opt]]), reverse=order)
+
+for i in priorities:
+	pkg = i[0].split(':')[1]
+	if pkg in candidates:
+		print '%5s %s' % ((i[vols[opt]] ,pkg))
+
